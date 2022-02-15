@@ -12,9 +12,9 @@ from data_dsprites import load_dsprites
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
-
+   
 parser.add_argument
-parser.add_argument('--model_dir', default='_checkpoints/', type=str, help='where to save models' )
+parser.add_argument('--model_dir', default='_checkpoints/model_single_object_dsprite.ckpt', type=str, help='where to save models' )
 parser.add_argument('--data_dir', default='/Users/oleksostapenko/Projects/', type=str, help='where to save models' )
 parser.add_argument('--seed', default=0, type=int, help='random seed')
 parser.add_argument('--batch_size', default=16, type=int)
