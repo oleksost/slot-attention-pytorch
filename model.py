@@ -159,7 +159,7 @@ class SlotAttentionAutoEncoder(nn.Module):
         super().__init__()
         self.hid_dim = hid_dim
         self.resolution = resolution
-        self.num_slots = num_slots
+        self.num_slots = num_slots    
         self.num_iterations = num_iterations
 
         self.encoder_cnn = Encoder(self.resolution, self.hid_dim, n_channels)
@@ -175,7 +175,7 @@ class SlotAttentionAutoEncoder(nn.Module):
             eps = 1e-8, 
             hidden_dim = 128)
 
-    def forward(self, image):
+    def forward(self, image):  
         # `image` has shape: [batch_size, num_channels, width, height].
 
         # Convolutional encoder with position embedding.
@@ -208,5 +208,4 @@ class SlotAttentionAutoEncoder(nn.Module):
         recon_combined = torch.sum(recons * masks, dim=1)  # Recombine image.
         recon_combined = recon_combined.permute(0,3,1,2)
         # `recon_combined` has shape: [batch_size, width, height, num_channels].
-
         return recon_combined, recons, masks, slots
