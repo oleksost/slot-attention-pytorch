@@ -50,7 +50,7 @@ class DisentangledSpritesDataset(Dataset):
 def load_dsprites(dir='/Users/oleksostapenko/Projects/',
                 val_split=0.9, shuffle=True, seed=42, batch_size=64):
     # img_size = 64
-    path = os.path.join(dir, 'dsprites-dataset')
+    path = os.path.join(dir, 'dsprites-dataset') 
     dataset = DisentangledSpritesDataset(path, transform=transforms.ToTensor())
 
     # Create data indices for training and validation splits:
@@ -66,8 +66,8 @@ def load_dsprites(dir='/Users/oleksostapenko/Projects/',
     train_sampler = SubsetRandomSampler(train_indices)
     val_sampler = SubsetRandomSampler(val_indices)
 
-    train_loader = DataLoader(dataset, batch_size=batch_size, sampler=train_sampler, shuffle=True)
-    val_loader = DataLoader(dataset, batch_size=batch_size, sampler=val_sampler, shuffle=True)
+    train_loader = DataLoader(dataset, batch_size=batch_size, sampler=train_sampler)
+    val_loader = DataLoader(dataset, batch_size=batch_size, sampler=val_sampler)
 
     return train_loader, val_loader
 
