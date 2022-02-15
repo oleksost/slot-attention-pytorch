@@ -7,13 +7,15 @@ import time
 import datetime
 import torch.optim as optim
 import torch
+from data_dsprites import load_dsprites
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument
-parser.add_argument('--model_dir', default='./tmp/model10.ckpt', type=str, help='where to save models' )
+parser.add_argument('--model_dir', default='_checkpoints/', type=str, help='where to save models' )
+parser.add_argument('--data_dir', default='/Users/oleksostapenko/Projects/', type=str, help='where to save models' )
 parser.add_argument('--seed', default=0, type=int, help='random seed')
 parser.add_argument('--batch_size', default=16, type=int)
 parser.add_argument('--num_slots', default=7, type=int, help='Number of slots in Slot Attention.')
@@ -27,21 +29,22 @@ parser.add_argument('--num_workers', default=4, type=int, help='number of worker
 parser.add_argument('--num_epochs', default=1000, type=int, help='number of workers for loading data')
 
 opt = parser.parse_args()
-resolution = (128, 128)
-
+resolution = (64, 64)
+ 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-train_set = CLEVR('train')
-model = SlotAttentionAutoEncoder(resolution, opt.num_slots, opt.num_iterations, opt.hid_dim).to(device)
+# train_set = CLEVR('train')
+model = SlotAttentionAutoEncoder(resolution, opt.num_slots, opt.num_iterations, opt.hid_dim, n_channels=1).to(device)
 # model.load_state_dict(torch.load('./tmp/model6.ckpt')['model_state_dict'])
 
 criterion = nn.MSELoss()
 
 params = [{'params': model.parameters()}]
 
-train_dataloader = torch.utils.data.DataLoader(train_set, batch_size=opt.batch_size,
-                        shuffle=True, num_workers=opt.num_workers)
+# train_dataloader = torch.utils.data.DataLoader(train_set, batch_size=opt.batch_size,
+#                         shuffle=True, num_workers=opt.num_workers)
 
+train_dataloader, _ = load_dsprites(opt.data_dir)     
 optimizer = optim.Adam(params, lr=opt.learning_rate)
 
 start = time.time()
@@ -53,7 +56,7 @@ for epoch in range(opt.num_epochs):
 
     for sample in tqdm(train_dataloader):
         i += 1
-
+        sample=sample[0]
         if i < opt.warmup_steps:
             learning_rate = opt.learning_rate * (i / opt.warmup_steps)
         else:
@@ -64,7 +67,7 @@ for epoch in range(opt.num_epochs):
 
         optimizer.param_groups[0]['lr'] = learning_rate
         
-        image = sample['image'].to(device)
+        image = sample.to(device) #['image'].to(device)
         recon_combined, recons, masks, slots = model(image)
         loss = criterion(recon_combined, image)
         total_loss += loss.item()

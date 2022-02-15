@@ -1,6 +1,7 @@
 import numpy as np
 from torch import nn
 import torch
+from torch.nn import init
 import torch.nn.functional as F
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -13,8 +14,9 @@ class SlotAttention(nn.Module):
         self.eps = eps
         self.scale = dim ** -0.5
 
-        self.slots_mu = nn.Parameter(torch.randn(1, 1, dim))
-        self.slots_sigma = nn.Parameter(torch.randn(1, 1, dim))
+        self.slots_mu = nn.Parameter(torch.randn(1, 1, dim))    
+        self.slots_logsigma = nn.Parameter(torch.zeros(1, 1, dim))
+        init.xavier_uniform_(self.slots_logsigma)
 
         self.to_q = nn.Linear(dim, dim)
         self.to_k = nn.Linear(dim, dim)
@@ -36,8 +38,9 @@ class SlotAttention(nn.Module):
         n_s = num_slots if num_slots is not None else self.num_slots
         
         mu = self.slots_mu.expand(b, n_s, -1)
-        sigma = self.slots_sigma.expand(b, n_s, -1)
-        slots = torch.normal(mu, sigma)
+        sigma = self.slots_logsigma.exp().expand(b, n_s, -1)
+
+        slots = mu + sigma * torch.randn(mu.shape, device = device)
 
         inputs = self.norm_input(inputs)        
         k, v = self.to_k(inputs), self.to_v(inputs)
@@ -90,9 +93,9 @@ class SoftPositionEmbed(nn.Module):
         return inputs + grid
 
 class Encoder(nn.Module):
-    def __init__(self, resolution, hid_dim):
+    def __init__(self, resolution, hid_dim, n_channels=3):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, hid_dim, 5, padding = 2)
+        self.conv1 = nn.Conv2d(n_channels, hid_dim, 5, padding = 2)
         self.conv2 = nn.Conv2d(hid_dim, hid_dim, 5, padding = 2)
         self.conv3 = nn.Conv2d(hid_dim, hid_dim, 5, padding = 2)
         self.conv4 = nn.Conv2d(hid_dim, hid_dim, 5, padding = 2)
@@ -146,7 +149,7 @@ class Decoder(nn.Module):
 
 """Slot Attention-based auto-encoder for object discovery."""
 class SlotAttentionAutoEncoder(nn.Module):
-    def __init__(self, resolution, num_slots, num_iterations, hid_dim):
+    def __init__(self, resolution, num_slots, num_iterations, hid_dim, n_channels=3):
         """Builds the Slot Attention-based auto-encoder.
         Args:
         resolution: Tuple of integers specifying width and height of input image.
@@ -159,7 +162,7 @@ class SlotAttentionAutoEncoder(nn.Module):
         self.num_slots = num_slots
         self.num_iterations = num_iterations
 
-        self.encoder_cnn = Encoder(self.resolution, self.hid_dim)
+        self.encoder_cnn = Encoder(self.resolution, self.hid_dim, n_channels)
         self.decoder_cnn = Decoder(self.hid_dim, self.resolution)
 
         self.fc1 = nn.Linear(hid_dim, hid_dim)

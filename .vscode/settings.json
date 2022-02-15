@@ -1,0 +1,9 @@
+{
+    "python.pythonPath": "/Users/oleksostapenko/opt/anaconda3/envs/nps/bin/python",
+    "python.languageServer": "Pylance",
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--enable=W0614",       
+        "--generated-members=numpy.* ,torch.*"
+    ]
+}
